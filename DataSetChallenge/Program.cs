@@ -55,7 +55,7 @@ namespace DataSetChallenge
             }
         }
 
-        private static async Task GetVehicleAndDealerData(string dataSetId, IEnumerable<int> vehicleIdList, List<Task<VehicleResponse>> vehicleInfoTaskList, List<Task<DealersResponse>> dealerDataTasks)
+        private static async Task GetVehicleAndDealerData(string dataSetId, IEnumerable<int> vehicleIdList, List<Task<VehicleResponse>> vehicleDataTasks, List<Task<DealersResponse>> dealerDataTasks)
         {
             HashSet<int> dealerHashSet = new HashSet<int>();
             object o = new object();
@@ -65,7 +65,7 @@ namespace DataSetChallenge
                 Task<VehicleResponse> vehicleTask = VAutoClient.GetVehicleDataAsync(dataSetId, id);
 
                 //cache reference to the task to be awaited later
-                vehicleInfoTaskList.Add(vehicleTask);
+                vehicleDataTasks.Add(vehicleTask);
 
                 /*
                  * The use of continuation tasks is an attempt to avoid the opportuntity cost of waiting for the all the vehicle info calls to complete before making any dealer data calls.
@@ -101,7 +101,7 @@ namespace DataSetChallenge
 #pragma warning restore 4014
             }
 
-            await Task.WhenAll(vehicleInfoTaskList); //wait for vehicle data calls to complete to enusre dealer data calls are created.
+            await Task.WhenAll(vehicleDataTasks); //wait for vehicle data calls to complete to enusre dealer data calls are created.
             await Task.WhenAll(dealerDataTasks);  //Given all vehcicle data calls are complete we can be sure all deal data tasks have been created with the hope the some has already started.
         }
 
