@@ -80,11 +80,11 @@ namespace DataSetChallenge.ApiClient
 
             HttpResponseMessage response = await client.PostAsync(client.BaseAddress.AbsoluteUri + string.Format("/api/{0}/answer", dataSetId), stringContent);
             AnswerResponse answerResponse = null;
-            if (response.IsSuccessStatusCode)
+            if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.BadRequest)
             {
                 answerResponse = await response.Content.ReadAsAsync<AnswerResponse>();
             }
-            else throw new Exception(string.Format("Failed to post the answer.\n\n{0}\n\n{1}", response.ReasonPhrase, jsonContent));
+            else throw new Exception(string.Format("Failed to post the answer.\n\n{0}\n\nDataSet ID: {1}\n\n{2}", response.ReasonPhrase, dataSetId, jsonContent));
             return answerResponse;
         }
     }
