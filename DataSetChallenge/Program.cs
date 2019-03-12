@@ -61,18 +61,18 @@ namespace DataSetChallenge
             foreach (var id in vehicleIdList)
             {
                 //Retrireve vehicle information - which provides access to the dealer id.
-                Task<VehicleResponse> t = VAutoClient.GetVehicleDataAsync(dataSet, id);
+                Task<VehicleResponse> vehicleTask = VAutoClient.GetVehicleDataAsync(dataSet, id);
 
                 //cache reference to the task to be awaited later
-                vehicleInfoTaskList.Add(t);
+                vehicleInfoTaskList.Add(vehicleTask);
 
 #pragma warning disable 4014
                 //for calls for vehicle information that have already completed - "continue" to retrieve the dealer data immediately rather than wait for all vehicle info callouts to complete.
-                t.ContinueWith((antecedent) =>
+                vehicleTask.ContinueWith((antecedent) =>
                 {
                     bool isDealerBeingHandled = false;
 
-                    //Unfortunately .NET does not have a built in thread-safe hashset so we perform synchronization on our own.
+                    //Unfortunately .NET does not have a built in thread-safe hashset so we must perform synchronization on our own.
                     lock (o)
                     {
                         isDealerBeingHandled = dealerHashSet.Contains(antecedent.Result.dealerId);
@@ -81,17 +81,17 @@ namespace DataSetChallenge
                     //Do not call out for deal data if another thread is already tasked with that responsibility
                     if (isDealerBeingHandled == false)
                     {
-                        //Unfortunately .NET does not have a built in thread-safe hashset so we perform synchronization on our own.
+                        //Unfortunately .NET does not have a built in thread-safe hashset so we must perform synchronization on our own.
                         lock (o)
                         {
                             dealerHashSet.Add(antecedent.Result.dealerId);
                         }
 
-                        //Retrieve deal data 
-                        Task<DealersResponse> t2 = VAutoClient.GetDealerDataAsync(dataSet, antecedent.Result.dealerId);
+                        //Retrieve dealer data 
+                        Task<DealersResponse> dealerTask = VAutoClient.GetDealerDataAsync(dataSet, antecedent.Result.dealerId);
 
                         //cache reference to the task to be awaited later
-                        dealerDataTaskList.Add(t2);
+                        dealerDataTaskList.Add(dealerTask);
                     }
                 }, TaskContinuationOptions.OnlyOnRanToCompletion);
 #pragma warning restore 4014
@@ -112,7 +112,7 @@ namespace DataSetChallenge
         public static Answer BuildAnswerRequest(List<Task<DealersResponse>> dealerDataTasks, List<Task<VehicleResponse>> vehicleDataTasks)
         {
             Answer answerRequest = new Answer() { dealers = new DealerAnswer[dealerDataTasks.Count] };
-            for(int i =0;i<dealerDataTasks.Count;++i)
+            for (int i = 0; i < dealerDataTasks.Count; ++i)
             {
                 var result = dealerDataTasks[i].Result;
                 answerRequest.dealers[i] = new DealerAnswer() { dealerId = result.dealerId, name = result.name, vehicles = new List<VehicleAnswer>() };
@@ -123,7 +123,7 @@ namespace DataSetChallenge
             {
                 var vehicleResult = vehicleDataTasks[i].Result;
                 DealerAnswer dealerResult = null;
-                for (int j = 0;j < answerRequest.dealers.Length;++j)
+                for (int j = 0; j < answerRequest.dealers.Length; ++j)
                 {
                     dealerResult = answerRequest.dealers[j];
                     if (dealerResult.dealerId == vehicleResult.dealerId) break;

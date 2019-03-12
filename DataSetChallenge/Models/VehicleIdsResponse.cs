@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace DataSetChallenge.Models
+﻿namespace DataSetChallenge.Models
 {
     public class VehicleIdsResponse
     {
