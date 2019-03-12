@@ -49,7 +49,7 @@ namespace DataSetChallenge
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("\n\nException: {0}\n\nStackTrace: {1}", e.Message, e.StackTrace);
             }
         }
 
@@ -76,17 +76,15 @@ namespace DataSetChallenge
                     lock (o)
                     {
                         isDealerBeingHandled = dealerHashSet.Contains(antecedent.Result.dealerId);
+                        if (isDealerBeingHandled == false)
+                        {
+                            dealerHashSet.Add(antecedent.Result.dealerId);
+                        }
                     }
 
                     //Do not call out for deal data if another thread is already tasked with that responsibility
                     if (isDealerBeingHandled == false)
                     {
-                        //Unfortunately .NET does not have a built in thread-safe hashset so we must perform synchronization on our own.
-                        lock (o)
-                        {
-                            dealerHashSet.Add(antecedent.Result.dealerId);
-                        }
-
                         //Retrieve dealer data 
                         Task<DealersResponse> dealerTask = VAutoClient.GetDealerDataAsync(dataSet, antecedent.Result.dealerId);
 

@@ -34,6 +34,7 @@ namespace DataSetChallenge.ApiClient
             {
                 dataSetId = await response.Content.ReadAsAsync<DatasetIdResponse>();
             }
+            else throw new Exception(string.Format("Unabled to retrieve data id.\n\n{0}", response.ReasonPhrase));
             return dataSetId;
         }
 
@@ -45,6 +46,7 @@ namespace DataSetChallenge.ApiClient
             {
                 vehicleIds = await response.Content.ReadAsAsync<VehicleIdsResponse>();
             }
+            else throw new Exception(string.Format("Unabled to retrieve data vehicle ids.\n\n{0}", response.ReasonPhrase));
             return vehicleIds;
         }
 
@@ -56,6 +58,7 @@ namespace DataSetChallenge.ApiClient
             {
                 vehicleData = await response.Content.ReadAsAsync<VehicleResponse>();
             }
+            else throw new Exception(string.Format("Unabled to retrieve vehicle information.\n\n{0}", response.ReasonPhrase));
             return vehicleData;
         }
 
@@ -67,6 +70,7 @@ namespace DataSetChallenge.ApiClient
             {
                 dealerData = await response.Content.ReadAsAsync<DealersResponse>();
             }
+            else throw new Exception(string.Format("Unabled to retrieve dealer information.\n\n{0}", response.ReasonPhrase));
             return dealerData;
         }
 
@@ -81,6 +85,7 @@ namespace DataSetChallenge.ApiClient
             {
                 answerResponse = await response.Content.ReadAsAsync<AnswerResponse>();
             }
+            else throw new Exception(string.Format("Failed to post the answer.\n\n{0}\n\n{1}", response.ReasonPhrase, jsonContent));
             return answerResponse;
         }
     }
