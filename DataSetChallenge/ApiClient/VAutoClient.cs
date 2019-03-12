@@ -28,18 +28,18 @@ namespace DataSetChallenge.ApiClient
         public static async Task<DatasetIdResponse> GetDataSetIdAsync()
         {
             HttpResponseMessage response = await client.GetAsync(client.BaseAddress.AbsoluteUri + "/api/datasetId");
-            DatasetIdResponse dataSetId = null;
+            DatasetIdResponse datasetIdResponse = null;
             if (response.IsSuccessStatusCode)
             {
-                dataSetId = await response.Content.ReadAsAsync<DatasetIdResponse>();
+                datasetIdResponse = await response.Content.ReadAsAsync<DatasetIdResponse>();
             }
             else throw new Exception(string.Format("Unabled to retrieve data id.\n\n{0}", response.ReasonPhrase));
-            return dataSetId;
+            return datasetIdResponse;
         }
 
-        public static async Task<VehicleIdsResponse> GetVehicleIdsAsync(DatasetIdResponse d)
+        public static async Task<VehicleIdsResponse> GetVehicleIdsAsync(string dataSetId)
         {
-            HttpResponseMessage response = await client.GetAsync(client.BaseAddress.AbsoluteUri + string.Format("/api/{0}/vehicles", d.datasetId));
+            HttpResponseMessage response = await client.GetAsync(client.BaseAddress.AbsoluteUri + string.Format("/api/{0}/vehicles", dataSetId));
             VehicleIdsResponse vehicleIds = null;
             if (response.IsSuccessStatusCode)
             {
@@ -49,9 +49,9 @@ namespace DataSetChallenge.ApiClient
             return vehicleIds;
         }
 
-        public static async Task<VehicleResponse> GetVehicleDataAsync(DatasetIdResponse d, int vehicleId)
+        public static async Task<VehicleResponse> GetVehicleDataAsync(string dataSetId, int vehicleId)
         {
-            HttpResponseMessage response = await client.GetAsync(client.BaseAddress.AbsoluteUri + string.Format("/api/{0}/vehicles/{1}", d.datasetId, vehicleId));
+            HttpResponseMessage response = await client.GetAsync(client.BaseAddress.AbsoluteUri + string.Format("/api/{0}/vehicles/{1}", dataSetId, vehicleId));
             VehicleResponse vehicleData = null;
             if (response.IsSuccessStatusCode)
             {
@@ -61,9 +61,9 @@ namespace DataSetChallenge.ApiClient
             return vehicleData;
         }
 
-        public static async Task<DealersResponse> GetDealerDataAsync(DatasetIdResponse d, int dealerId)
+        public static async Task<DealersResponse> GetDealerDataAsync(string dataSetId, int dealerId)
         {
-            HttpResponseMessage response = await client.GetAsync(client.BaseAddress.AbsoluteUri + string.Format("/api/{0}/dealers/{1}", d.datasetId, dealerId));
+            HttpResponseMessage response = await client.GetAsync(client.BaseAddress.AbsoluteUri + string.Format("/api/{0}/dealers/{1}", dataSetId, dealerId));
             DealersResponse dealerData = null;
             if (response.IsSuccessStatusCode)
             {
@@ -73,12 +73,12 @@ namespace DataSetChallenge.ApiClient
             return dealerData;
         }
 
-        public static async Task<AnswerResponse> PostAnswer(DatasetIdResponse d, Answer answerRequest)
+        public static async Task<AnswerResponse> PostAnswer(string dataSetId, Answer answerRequest)
         {
             var jsonContent = JsonConvert.SerializeObject(answerRequest);
             var stringContent = new StringContent(jsonContent, Encoding.UTF8, "application/json");
 
-            HttpResponseMessage response = await client.PostAsync(client.BaseAddress.AbsoluteUri + string.Format("/api/{0}/answer", d.datasetId), stringContent);
+            HttpResponseMessage response = await client.PostAsync(client.BaseAddress.AbsoluteUri + string.Format("/api/{0}/answer", dataSetId), stringContent);
             AnswerResponse answerResponse = null;
             if (response.IsSuccessStatusCode)
             {

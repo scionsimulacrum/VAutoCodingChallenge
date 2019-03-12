@@ -21,11 +21,12 @@ namespace DataSetChallenge
                 VAutoClient.Initialize();
 
                 Console.WriteLine("Retreiving data set id...");
-                DatasetIdResponse dataSet = await VAutoClient.GetDataSetIdAsync();
+                DatasetIdResponse datasetIdResponse = await VAutoClient.GetDataSetIdAsync();
+                string dataSetId = datasetIdResponse.datasetId;
                 Console.WriteLine("Done.");
 
                 Console.WriteLine("Retreiving vehicle ids...");
-                VehicleIdsResponse vehicleIds = await VAutoClient.GetVehicleIdsAsync(dataSet);
+                VehicleIdsResponse vehicleIds = await VAutoClient.GetVehicleIdsAsync(dataSetId);
                 Console.WriteLine("Done.");
 
                 Console.WriteLine("Retreiving vehicle data...");
@@ -35,15 +36,15 @@ namespace DataSetChallenge
                 Console.WriteLine("Retreiving dealer data...");
                 List<Task<VehicleResponse>> vehicleDataTasks = new List<Task<VehicleResponse>>();
                 List<Task<DealersResponse>> dealerDataTasks = new List<Task<DealersResponse>>();
-                await GetVehicleAndDealerData(dataSet, vehicleIdList, vehicleDataTasks, dealerDataTasks);
+                await GetVehicleAndDealerData(dataSetId, vehicleIdList, vehicleDataTasks, dealerDataTasks);
                 Console.WriteLine("Done.");
 
                 Console.WriteLine("Building answer...");
-                Answer answerRequest = BuildAnswerRequest(dealerDataTasks, vehicleDataTasks);
+                Answer answer = BuildAnswer(dealerDataTasks, vehicleDataTasks);
                 Console.WriteLine("Done.");
 
                 Console.WriteLine("Posting answer...");
-                AnswerResponse answerResponse = await VAutoClient.PostAnswer(dataSet, answerRequest);
+                AnswerResponse answerResponse = await VAutoClient.PostAnswer(dataSetId, answer);
                 Console.WriteLine("Done.");
 
                 Console.WriteLine("Result: {0}\nMessage: {1}\nMilliseconds: {2}", answerResponse.success, answerResponse.message, answerResponse.totalMilliseconds);
@@ -54,14 +55,14 @@ namespace DataSetChallenge
             }
         }
 
-        private static async Task GetVehicleAndDealerData(DatasetIdResponse dataSet, IEnumerable<int> vehicleIdList, List<Task<VehicleResponse>> vehicleInfoTaskList, List<Task<DealersResponse>> dealerDataTasks)
+        private static async Task GetVehicleAndDealerData(string dataSetId, IEnumerable<int> vehicleIdList, List<Task<VehicleResponse>> vehicleInfoTaskList, List<Task<DealersResponse>> dealerDataTasks)
         {
             HashSet<int> dealerHashSet = new HashSet<int>();
             object o = new object();
             foreach (var id in vehicleIdList)
             {
                 //Retrireve vehicle information - which provides access to the dealer id.
-                Task<VehicleResponse> vehicleTask = VAutoClient.GetVehicleDataAsync(dataSet, id);
+                Task<VehicleResponse> vehicleTask = VAutoClient.GetVehicleDataAsync(dataSetId, id);
 
                 //cache reference to the task to be awaited later
                 vehicleInfoTaskList.Add(vehicleTask);
@@ -87,11 +88,11 @@ namespace DataSetChallenge
                         }
                     }
 
-                    //Do not call out for deal data if another thread is already tasked with that responsibility
+                    //Do not call out for dealer data if another thread is already tasked with that responsibility
                     if (isDealerBeingHandled == false)
                     {
                         //Retrieve dealer data 
-                        Task<DealersResponse> dealerTask = VAutoClient.GetDealerDataAsync(dataSet, antecedent.Result.dealerId);
+                        Task<DealersResponse> dealerTask = VAutoClient.GetDealerDataAsync(dataSetId, antecedent.Result.dealerId);
 
                         //cache reference to the task to be awaited later
                         dealerDataTasks.Add(dealerTask);
@@ -104,23 +105,22 @@ namespace DataSetChallenge
             await Task.WhenAll(dealerDataTasks);  //Given all vehcicle data calls are complete we can be sure all deal data tasks have been created with the hope the some has already started.
         }
 
-        public static Answer BuildAnswerRequest(List<Task<DealersResponse>> dealerDataTasks, List<Task<VehicleResponse>> vehicleDataTasks)
+        public static Answer BuildAnswer(List<Task<DealersResponse>> dealerDataTasks, List<Task<VehicleResponse>> vehicleDataTasks)
         {
-            Answer answerRequest = new Answer() { dealers = new DealerAnswer[dealerDataTasks.Count] };
+            Answer answer = new Answer() { dealers = new DealerAnswer[dealerDataTasks.Count] };
             for (int i = 0; i < dealerDataTasks.Count; ++i)
             {
                 var result = dealerDataTasks[i].Result;
-                answerRequest.dealers[i] = new DealerAnswer() { dealerId = result.dealerId, name = result.name, vehicles = new List<VehicleAnswer>() };
+                answer.dealers[i] = new DealerAnswer() { dealerId = result.dealerId, name = result.name, vehicles = new List<VehicleAnswer>() };
             }
 
-            //The set of dealers should be much smaller than the set of vehicles
             for (int i = 0; i < vehicleDataTasks.Count; ++i)
             {
                 var vehicleResult = vehicleDataTasks[i].Result;
                 DealerAnswer dealerResult = null;
-                for (int j = 0; j < answerRequest.dealers.Length; ++j)
+                for (int j = 0; j < answer.dealers.Length; ++j)
                 {
-                    dealerResult = answerRequest.dealers[j];
+                    dealerResult = answer.dealers[j];
                     if (dealerResult.dealerId == vehicleResult.dealerId) break;
                 }
 
@@ -133,7 +133,7 @@ namespace DataSetChallenge
                 });
             }
 
-            return answerRequest;
+            return answer;
         }
     }
 }
