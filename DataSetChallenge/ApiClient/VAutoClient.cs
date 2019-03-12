@@ -14,7 +14,6 @@ namespace DataSetChallenge.ApiClient
 
         public static void Initialize()
         {
-            // Update port # in the following line.
             client.BaseAddress = new Uri("https://vautointerview.azurewebsites.net");
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(
