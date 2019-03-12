@@ -29,11 +29,11 @@ namespace DataSetChallenge
                 VehicleIdsResponse vehicleIds = await VAutoClient.GetVehicleIdsAsync(dataSetId);
                 Console.WriteLine("Done.");
 
-                Console.WriteLine("Retreiving vehicle data...");
+                Console.WriteLine("Purging vehicle id duplicates...");
                 IEnumerable<int> vehicleIdList = vehicleIds.vehicleIds.Distinct();   //ensure duplicate calls for vehicle data are not performed.
                 Console.WriteLine("Done.");
 
-                Console.WriteLine("Retreiving dealer data...");
+                Console.WriteLine("Retreiving vehicle and dealer data...");
                 List<Task<VehicleResponse>> vehicleDataTasks = new List<Task<VehicleResponse>>();
                 List<Task<DealersResponse>> dealerDataTasks = new List<Task<DealersResponse>>();
                 await GetVehicleAndDealerData(dataSetId, vehicleIdList, vehicleDataTasks, dealerDataTasks);
